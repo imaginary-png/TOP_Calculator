@@ -72,6 +72,10 @@ body{
 button{
     font-size: 16px;
     font-weight: 700;
-    border-radius: 12px;
+    border-radius: 12px;    
+}
+
+.todo{
+    margin-top: 80px;
     
 }
