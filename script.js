@@ -23,6 +23,8 @@ let firstNum;
 let secondNum;
 let operator;
 let operatorSymbol;
+let lastOperator;
+let lastOperatorSymbol;
 let inputUsed = false;
 
 function add(num1, num2) {
@@ -45,13 +47,13 @@ function divide(num1, num2) {
 
 //input functions 
 
-function updateInput() {
+function updateInput(text) {
 
     if (inputDisplay.innerText == '0' || inputUsed) { inputDisplay.innerText = ''; inputUsed = false; } //remove starting 0
 
     //only allow 22 numbers, otherwise not enough room and why would you use so many anyway? this is a basic calc.
     if (inputDisplay.innerText.length == 22) { return }
-    inputDisplay.innerText += this.innerText;
+    inputDisplay.innerText += text;
 
     //lower fontsize if the input box is filling up.
     let currentFontSize = parseInt(window.getComputedStyle(inputDisplay).fontSize.split('px'));
@@ -92,7 +94,7 @@ function deleteFromInput() {
 
 //math operator button event listeners
 
-function operatorPicked() {
+function operatorPicked(dataOperator) {
 
     let oldOperatorSymbol = operatorSymbol;
     let oldOperator = operator;
@@ -100,14 +102,15 @@ function operatorPicked() {
     //if a different operator was pressed, change operators but do no calculation
 
 
-    operatorSymbol = getOperator(this);
+    operatorSymbol = getOperator(dataOperator);
     if (oldOperatorSymbol != undefined && oldOperatorSymbol != operatorSymbol) {
         if (oldOperatorSymbol != operatorSymbol) {
-            if (!inputUsed) { //is preexisting operator selected, to that before changing operators
+            if (!inputUsed) { //is preexisting operator selected, do that before changing operators
                 secondNum = parseInt(inputDisplay.innerText);
                 firstNum = oldOperator(firstNum, secondNum);
             }
             resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
+            lastOperatorSymbol = operatorSymbol;
             inputUsed = true;
             return;
         }
@@ -126,9 +129,11 @@ function operatorPicked() {
 
     if (firstNum && secondNum) {
         firstNum = operator(firstNum, secondNum);
-        resultDisplay.innerText = firstNum;
+        resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
         secondNum = undefined;
         inputUsed = true;
+        lastOperator = operator;
+        lastOperatorSymbol = operatorSymbol;
         operator = undefined;
         operatorSymbol = undefined;
 
@@ -139,14 +144,57 @@ function calculate() {
     secondNum = parseInt(inputDisplay.innerText);
 
     if (operator != undefined && firstNum != undefined && secondNum != undefined) {
-        resultDisplay.innerText = `${operator(firstNum, secondNum)}`;
-        firstNum = undefined;
+        firstNum = `${operator(firstNum, secondNum)}`;
+        resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
         secondNum = undefined;
         inputUsed = true;
+        lastOperator = operator;
+        lastOperatorSymbol = operatorSymbol;
         operator = undefined;
         operatorSymbol = undefined;
     }
+    else if (
+        lastOperator != undefined && firstNum != undefined && secondNum != undefined) {
+        firstNum = lastOperator(firstNum, secondNum);
+        resultDisplay.innerText = `${lastOperator(firstNum, secondNum)} ${lastOperatorSymbol}`;
+        secondNum = undefined;
+    }
 }
+
+function keypressHandler(e) {
+    console.log(e.key)
+    if (e.key >= '0' && e.key <= '9') {
+        updateInput(e.key);
+        return;
+    }
+    if (e.key === 'Backspace') {
+        deleteFromInput();
+        return;
+    }
+    if (e.key === 'Escape') {
+        clearInput();
+        return;
+    }
+    if (e.key === '=' || e.key === 'Enter') {
+        calculate();
+        return;
+    }
+
+    switch (e.key) {
+        case '+':
+            operatorPicked('add');
+            break;
+        case '-':
+            operatorPicked('subtract');
+            break;
+        case '*':
+             operatorPicked('multiply');
+            break;
+        case '/':
+            operatorPicked('divide');
+    }
+}
+
 
 //helpers
 function clearDisplay() {
@@ -157,7 +205,7 @@ function clearDisplay() {
 }
 
 function getOperator(op) {
-    switch (op.getAttribute('data-operator')) {
+    switch (op) {
         case 'add':
             operator = add;
             return '+';
@@ -176,15 +224,17 @@ function getOperator(op) {
 //startup
 window.onload = () => {
     Array.from(calcNumbers).forEach((number) =>
-        number.addEventListener('click', updateInput));
+        number.addEventListener('click', () => updateInput(number.innerText)));
 
     clearOperator.addEventListener('click', clearInput);
     delOperator.addEventListener('click', deleteFromInput);
     equalsOperator.addEventListener('click', calculate)
 
-    addOperator.addEventListener('click', operatorPicked);
-    subtractOperator.addEventListener('click', operatorPicked);
-    multiplyOperator.addEventListener('click', operatorPicked);
-    divideOperator.addEventListener('click', operatorPicked);
+    addOperator.addEventListener('click', () => operatorPicked(addOperator.getAttribute('data-operator')));
+    subtractOperator.addEventListener('click', () => operatorPicked(subtractOperator.getAttribute('data-operator')));
+    multiplyOperator.addEventListener('click', () => operatorPicked(multiplyOperator.getAttribute('data-operator')));
+    divideOperator.addEventListener('click', () => operatorPicked(divideOperator.getAttribute('data-operator')));
+
+    window.addEventListener('keydown', keypressHandler);
 
 }
