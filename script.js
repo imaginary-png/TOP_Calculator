@@ -94,21 +94,26 @@ function deleteFromInput() {
 
 function operatorPicked() {
 
-    oldOperatorSymbol = operatorSymbol;
+    let oldOperatorSymbol = operatorSymbol;
+    let oldOperator = operator;
 
     //if a different operator was pressed, change operators but do no calculation
-    if (operator != undefined) { 
-        //operator = undefined;
-        operatorSymbol = getOperator(this);
-        if (oldOperatorSymbol != operatorSymbol){
-        resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
-        return;
+
+
+    operatorSymbol = getOperator(this);
+    if (oldOperatorSymbol != undefined && oldOperatorSymbol != operatorSymbol) {
+        if (oldOperatorSymbol != operatorSymbol) {
+            if (!inputUsed) { //is preexisting operator selected, to that before changing operators
+                secondNum = parseInt(inputDisplay.innerText);
+                firstNum = oldOperator(firstNum, secondNum);
+            }
+            resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
+            inputUsed = true;
+            return;
         }
     }
 
     //else if same operator or first time, assign values
-    operatorSymbol = getOperator(this);
-
     if (firstNum != undefined && secondNum == undefined) {
         secondNum = parseInt(inputDisplay.innerText);
         inputUsed = true;
@@ -117,7 +122,7 @@ function operatorPicked() {
         firstNum = parseInt(inputDisplay.innerText);
         inputUsed = true;
         resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
-    }   
+    }
 
     if (firstNum && secondNum) {
         firstNum = operator(firstNum, secondNum);
@@ -125,15 +130,27 @@ function operatorPicked() {
         secondNum = undefined;
         inputUsed = true;
         operator = undefined;
+        operatorSymbol = undefined;
+
     }
 }
 
 function calculate() {
-    //todo
+    secondNum = parseInt(inputDisplay.innerText);
+
+    if (operator != undefined && firstNum != undefined && secondNum != undefined) {
+        resultDisplay.innerText = `${operator(firstNum, secondNum)}`;
+        firstNum = undefined;
+        secondNum = undefined;
+        inputUsed = true;
+        operator = undefined;
+        operatorSymbol = undefined;
+    }
 }
 
 //helpers
 function clearDisplay() {
+    resultDisplay.innerText = '';
     inputDisplay.innerText = '0';
     inputDisplay.style.fontSize = DEFAULT_FONT_SIZE;
     inputMaxLength = DEFAULT_MAX_INPUT_LENGTH;
