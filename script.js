@@ -2,6 +2,7 @@ const DEFAULT_FONT_SIZE = '50px';
 const DEFAULT_MAX_INPUT_LENGTH = 11;
 
 const inputDisplay = document.getElementById('calc-input');
+const resultDisplay = document.getElementById('calc-result');
 
 const calcNumbers = document.getElementsByClassName('calc-number');
 const calcOperators = document.getElementsByClassName('calc-operator');
@@ -20,6 +21,9 @@ const equalsOperator = document.getElementById('equals');
 let inputMaxLength = DEFAULT_MAX_INPUT_LENGTH; //default 11, input length for resizing
 let firstNum;
 let secondNum;
+let operator;
+let operatorSymbol;
+let inputUsed = false;
 
 function add(num1, num2) {
     return num1 + num2;
@@ -42,7 +46,8 @@ function divide(num1, num2) {
 //input functions 
 
 function updateInput() {
-    if (inputDisplay.innerText == '0') { inputDisplay.innerText = '' } //remove starting 0
+
+    if (inputDisplay.innerText == '0' || inputUsed) { inputDisplay.innerText = ''; inputUsed = false; } //remove starting 0
 
     //only allow 22 numbers, otherwise not enough room and why would you use so many anyway? this is a basic calc.
     if (inputDisplay.innerText.length == 22) { return }
@@ -58,9 +63,9 @@ function updateInput() {
 }
 
 function clearInput() {
-    inputDisplay.innerText = '0';
-    inputDisplay.style.fontSize = DEFAULT_FONT_SIZE;
-    inputMaxLength = DEFAULT_MAX_INPUT_LENGTH;
+    clearDisplay();
+    firstNum = undefined;
+    secondNum = undefined;
 }
 
 function deleteFromInput() {
@@ -85,10 +90,84 @@ function deleteFromInput() {
     }
 }
 
+//math operator button event listeners
+
+function operatorPicked() {
+
+    oldOperatorSymbol = operatorSymbol;
+
+    //if a different operator was pressed, change operators but do no calculation
+    if (operator != undefined) { 
+        //operator = undefined;
+        operatorSymbol = getOperator(this);
+        if (oldOperatorSymbol != operatorSymbol){
+        resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
+        return;
+        }
+    }
+
+    //else if same operator or first time, assign values
+    operatorSymbol = getOperator(this);
+
+    if (firstNum != undefined && secondNum == undefined) {
+        secondNum = parseInt(inputDisplay.innerText);
+        inputUsed = true;
+    }
+    else {
+        firstNum = parseInt(inputDisplay.innerText);
+        inputUsed = true;
+        resultDisplay.innerText = `${firstNum} ${operatorSymbol}`;
+    }   
+
+    if (firstNum && secondNum) {
+        firstNum = operator(firstNum, secondNum);
+        resultDisplay.innerText = firstNum;
+        secondNum = undefined;
+        inputUsed = true;
+        operator = undefined;
+    }
+}
+
+function calculate() {
+    //todo
+}
+
+//helpers
+function clearDisplay() {
+    inputDisplay.innerText = '0';
+    inputDisplay.style.fontSize = DEFAULT_FONT_SIZE;
+    inputMaxLength = DEFAULT_MAX_INPUT_LENGTH;
+}
+
+function getOperator(op) {
+    switch (op.getAttribute('data-operator')) {
+        case 'add':
+            operator = add;
+            return '+';
+        case 'subtract':
+            operator = subtract;
+            return '-';
+        case 'multiply':
+            operator = multiply;
+            return '×';
+        case 'divide':
+            operator = divide;
+            return '÷';
+    }
+}
+
+//startup
 window.onload = () => {
     Array.from(calcNumbers).forEach((number) =>
         number.addEventListener('click', updateInput));
 
     clearOperator.addEventListener('click', clearInput);
     delOperator.addEventListener('click', deleteFromInput);
+    equalsOperator.addEventListener('click', calculate)
+
+    addOperator.addEventListener('click', operatorPicked);
+    subtractOperator.addEventListener('click', operatorPicked);
+    multiplyOperator.addEventListener('click', operatorPicked);
+    divideOperator.addEventListener('click', operatorPicked);
+
 }
